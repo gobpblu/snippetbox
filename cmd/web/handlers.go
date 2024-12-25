@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	// "html/template"
 	"net/http"
 	"strconv"
 
@@ -23,34 +22,16 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, snippet := range snippets {
-		fmt.Fprintf(w, "%+v\n", snippet)
-	}
-
-	// files := []string{
-	// "./ui/html/base.html",
-	// "./ui/html/pages/home.html",
-	// "./ui/html/partials/nav.html",
-	// }
-
-	// ts, err := template.ParseFiles(files...)
-
-	// if err != nil {
-	// app.serverError(w, err)
-	// return
-	// }
-
-	// err = ts.ExecuteTemplate(w, "base", nil)
-	// if err != nil {
-	// app.serverError(w, err)
-	// }
-
-	// w.Write([]byte("Hello from snippetbox"))
+	app.render(w, http.StatusOK, "home.html", &templateData{
+		Snippets: snippets,
+	})
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	app.infoLog.Print("id", id)
 	if err != nil || id < 1 {
+		app.errorLog.Print(err.Error())
 		app.notFound(w)
 		return
 	}
@@ -66,9 +47,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
-	fmt.Fprintf(w, "%+v", snippet)
-	// w.Write([]byte("Display a specific snippet..."))
+	app.render(w, http.StatusOK, "view.html", &templateData{Snippet: snippet})
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
