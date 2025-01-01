@@ -12,6 +12,8 @@ type templateData struct {
 	CurrentYear int
 	Snippet     *models.Snippet
 	Snippets    []*models.Snippet
+	Form        any
+	Flash       string
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {
@@ -51,5 +53,5 @@ func humanDate(t time.Time) string {
 }
 
 var functions = template.FuncMap{
-	"humanDate": humanDate, 
+	"humanDate": humanDate,
 }
