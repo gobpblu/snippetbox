@@ -44,6 +44,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
+			fmt.Println("ERR NO RECORD:", id)
 			app.notFound(w)
 		} else {
 			app.serverError(w, err)
@@ -249,4 +250,8 @@ func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
 	app.sessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func ping(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("OK"))
 }
