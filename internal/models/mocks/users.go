@@ -1,6 +1,8 @@
 package mocks
 
 import (
+	"time"
+
 	"snippetbox.gobpo2002.io/internal/models"
 )
 
@@ -29,5 +31,20 @@ func (m *UserModel) Exists(id int) (bool, error) {
 		return true, nil
 	default:
 		return false, nil
+	}
+}
+
+func (m *UserModel) Get(id int) (*models.User, error) {
+	switch id {
+	case 1:
+		return &models.User{
+			ID:      1,
+			Name:    "Max",
+			Email:   "JCFollower@gmail.com",
+			Created: time.Date(2024, 07, 14, 21, 0, 0, 0, time.UTC),
+		}, nil
+
+	default:
+		return nil, models.ErrNoRecord
 	}
 }

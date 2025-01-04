@@ -255,3 +255,26 @@ func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
 func ping(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
+
+func (app *application) about(w http.ResponseWriter, r *http.Request) {
+	templateData := app.newTemplateData(r)
+	app.render(w, http.StatusOK, "about.html", templateData)
+}
+
+func (app *application) userAccountView(w http.ResponseWriter, r *http.Request) {
+	templateData := app.newTemplateData(r)
+
+	id := app.sessionManager.GetInt(r.Context(), "authenticatedUserID")
+	user, err := app.users.Get(id)
+	if err != nil {
+		if err == models.ErrNoRecord {
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	templateData.User = user
+	app.render(w, http.StatusOK, "account.html", templateData)
+}
