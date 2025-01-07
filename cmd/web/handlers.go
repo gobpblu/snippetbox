@@ -287,3 +287,53 @@ func (app *application) userAccountView(w http.ResponseWriter, r *http.Request) 
 	templateData.User = user
 	app.render(w, http.StatusOK, "account.html", templateData)
 }
+
+type updatePasswordForm struct {
+	CurrentPassword     string `form:"currentPassword"`
+	NewPassword         string `form:"newPassword"`
+	ConfirmNewPassword  string `form:"confirmNewPassword"`
+	validator.Validator `form:"-"`
+}
+
+func (app *application) updateAccountPassword(w http.ResponseWriter, r *http.Request) {
+	templateData := app.newTemplateData(r)
+	templateData.Form = updatePasswordForm{}
+	app.render(w, http.StatusOK, "change_password.html", templateData)
+}
+
+func (app *application) updateAccountPasswordPost(w http.ResponseWriter, r *http.Request) {
+	var form updatePasswordForm
+
+	err := app.decodePostForm(r, &form)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form.CheckField(validator.NotBlank(form.CurrentPassword), "currentPassword", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.NewPassword), "newPassword", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.NewPassword, 8), "newPassword", "This field must be at least 8 characters long")
+	form.CheckField(validator.NotBlank(form.ConfirmNewPassword), "confirmNewPassword", "This field cannot be blank")
+	form.CheckField(form.NewPassword == form.ConfirmNewPassword, "confirmNewPassword", "Passwords do not match")
+
+	if !form.Valid() {
+		templateData := app.newTemplateData(r)
+		templateData.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "change_password.html", templateData)
+		return
+	}
+
+	id := app.sessionManager.GetInt(r.Context(), "authenticatedUserID")
+	err = app.users.UpdatePassword(id, form.CurrentPassword, form.NewPassword)
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidCredentials) {
+			form.AddNonFieldError("You've entered wrong current password")
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	app.sessionManager.Put(r.Context(), "flash", "Your password has been successfully changed!")
+	http.Redirect(w, r, "/user/account", http.StatusSeeOther)
+}
