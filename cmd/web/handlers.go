@@ -235,7 +235,15 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 
 	app.sessionManager.Put(r.Context(), "authenticatedUserID", id)
 
-	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
+	urlPath := app.sessionManager.PopString(r.Context(), "redirectedFromPage")
+
+	fmt.Println("before redirect url = ", urlPath)
+
+	if urlPath == "" {
+		urlPath = "/"
+	}
+
+	http.Redirect(w, r, urlPath, http.StatusSeeOther)
 }
 
 func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
@@ -268,6 +276,7 @@ func (app *application) userAccountView(w http.ResponseWriter, r *http.Request) 
 	user, err := app.users.Get(id)
 	if err != nil {
 		if err == models.ErrNoRecord {
+			app.sessionManager.Put(r.Context(), "redirectedFromPage", r.URL.Path)
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 		} else {
 			app.serverError(w, err)
